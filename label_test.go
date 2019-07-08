@@ -328,14 +328,14 @@ func TestLabel1(t *testing.T) {
 			t.Fail()
 		}
 
-		bb := la.Bboxes()
+		bb := la.Bboxes(nil)
 		if !compareBboxes(bb, tr.bboxes) {
 			fmt.Printf("Bounding boxes do not match in test %d.\n", jt)
 			fmt.Printf("Got %v, expected %v.\n", bb, tr.bboxes)
 			t.Fail()
 		}
 
-		sz := la.Sizes()
+		sz := la.Sizes(nil)
 		if !compareSizes(sz, tr.sizes) {
 			fmt.Printf("Sizes do not match for test %d\n", jt)
 			fmt.Printf("Got:\n%v\n", sz)

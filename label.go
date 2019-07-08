@@ -211,37 +211,45 @@ func (la *Label) labelPass3() {
 
 // Sizes returns the sizes (number of pixels) in every labeled component
 // of the array.  The size of the component with label k is held in position
-// k of the returned slice.
-func (la *Label) Sizes() []int {
-	sz := make([]int, la.ncomp)
+// k of the returned slice.  The provided buffer will be used if large enough.
+func (la *Label) Sizes(buf []int) []int {
 
-	for _, v := range la.labels {
-		sz[v]++
+	if cap(buf) < la.ncomp {
+		buf = make([]int, la.ncomp)
+	} else {
+		buf = buf[0:la.ncomp]
+		for i := range buf {
+			buf[i] = 0
+		}
 	}
 
-	return sz
+	for _, v := range la.labels {
+		buf[v]++
+	}
+
+	return buf
 }
 
 // Bboxes returns the bounding boxes for every labeled component.
 // The bounding box for the component with label k is held in position
-// k of the returned slice.
-func (la *Label) Bboxes() []image.Rectangle {
+// k of the returned slice.  The provided slice is used if large enough.
+func (la *Label) Bboxes(buf []image.Rectangle) []image.Rectangle {
 
-	var bb []image.Rectangle
+	buf = buf[0:0]
 	var bf []bool
 
 	for i, v := range la.labels {
 		row := i / la.cols
 		col := i % la.cols
-		for len(bb) < v+1 {
-			bb = append(bb, image.Rectangle{})
+		for len(buf) < v+1 {
+			buf = append(buf, image.Rectangle{})
 			bf = append(bf, false)
 		}
 		if !bf[v] {
-			bb[v] = image.Rect(col, row, col+1, row+1)
+			buf[v] = image.Rect(col, row, col+1, row+1)
 			bf[v] = true
 		} else {
-			r := bb[v]
+			r := buf[v]
 			if col < r.Min.X {
 				r.Min.X = col
 			}
@@ -254,11 +262,11 @@ func (la *Label) Bboxes() []image.Rectangle {
 			if row+1 > r.Max.Y {
 				r.Max.Y = row + 1
 			}
-			bb[v] = r
+			buf[v] = r
 		}
 	}
 
-	return bb
+	return buf
 }
 
 // Labels returns the component labels.

@@ -26,6 +26,11 @@ type Persistence struct {
 
 	// The current and previous labeled image
 	lbuf1, lbuf2 []int
+
+	size2   []int
+	max2    []int
+	bboxes2 []image.Rectangle
+	pns     []Pstate
 }
 
 // Trajectories returns the persistence trajectories.  Each outer element
@@ -47,6 +52,7 @@ type Pstate struct {
 }
 
 func threshold(img []int, timg []uint8, thresh int) []uint8 {
+
 	if len(timg) != len(img) {
 		timg = make([]uint8, len(img))
 	}
@@ -62,18 +68,22 @@ func threshold(img []int, timg []uint8, thresh int) []uint8 {
 	return timg
 }
 
-func maxes(lab, img []int, ncomp, rows int) []int {
+func maxes(lab, max2, img []int, ncomp, rows int) []int {
 
-	mx := make([]int, ncomp)
+	if cap(max2) < ncomp {
+		max2 = make([]int, ncomp)
+	} else {
+		max2 = max2[0:ncomp]
+	}
 
 	for i := range lab {
 		l := lab[i]
-		if img[i] > mx[l] {
-			mx[l] = img[i]
+		if img[i] > max2[l] {
+			max2[l] = img[i]
 		}
 	}
 
-	return mx
+	return max2
 }
 
 // NewPersistence calculates an object persistence diagram for the given image.
@@ -95,28 +105,40 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 	// Label the first image
 	lbl := NewLabel(timg, rows, lbuf2)
 	lbuf2 = lbl.Labels()
-	size2 := lbl.Sizes()
-	max2 := maxes(lbuf2, img, len(size2), rows)
-	bboxes2 := lbl.Bboxes()
+	size2 := lbl.Sizes(nil)
+	max2 := maxes(lbuf2, nil, img, len(size2), rows)
+	bboxes2 := lbl.Bboxes(nil)
 
 	var traj [][]Pstate
 	for k, m := range max2 {
 		if k != 0 {
 			s := size2[k]
 			bb := bboxes2[k]
-			v := []Pstate{{Label: k, Max: m, Size: s, Step: 0, Threshold: low, Bbox: bb}}
+			v := []Pstate{
+				{
+					Label:     k,
+					Max:       m,
+					Size:      s,
+					Step:      0,
+					Threshold: low,
+					Bbox:      bb,
+				},
+			}
 			traj = append(traj, v)
 		}
 	}
 
 	return &Persistence{
-		rows:  rows,
-		cols:  cols,
-		img:   img,
-		timg:  timg,
-		lbuf1: lbuf1,
-		lbuf2: lbuf2,
-		traj:  traj,
+		rows:    rows,
+		cols:    cols,
+		img:     img,
+		timg:    timg,
+		lbuf1:   lbuf1,
+		lbuf2:   lbuf2,
+		traj:    traj,
+		size2:   size2,
+		max2:    max2,
+		bboxes2: bboxes2,
 	}
 }
 
@@ -124,6 +146,87 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 // numeric labels are not comparable between calls to Next.
 func (ps *Persistence) Labels() []int {
 	return ps.lbuf2
+}
+
+func (ps *Persistence) getAncestors(thresh int) {
+
+	ps.pns = ps.pns[0:0]
+
+	rc := ps.rows * ps.cols
+	for i := 0; i < rc; i++ {
+		if ps.lbuf1[i] == 0 || ps.lbuf2[i] == 0 {
+			continue
+		}
+		l1 := ps.lbuf1[i]
+		l2 := ps.lbuf2[i]
+		s2 := ps.size2[l2]
+		m2 := ps.max2[l2]
+		for len(ps.pns) < l1+1 {
+			ps.pns = append(ps.pns, Pstate{})
+		}
+		mx := ps.pns[l1].Max
+
+		// The favored descendent is the brightest one, which will have the
+		// longest lifespan.  But if the brighness values are tied, go with
+		// the larger region.
+		if m2 > mx || (m2 == mx && s2 > ps.pns[l1].Size) {
+			bb := ps.bboxes2[l2]
+			ps.pns[l1] = Pstate{
+				Label:     l2,
+				Max:       m2,
+				Size:      s2,
+				Step:      ps.step,
+				Threshold: thresh,
+				Bbox:      bb,
+			}
+		}
+	}
+}
+
+// Extend each region from the previous step to its descendant
+// in the current step, where possible
+// Add regions that are born in this step.
+func (ps *Persistence) extend(thresh int) {
+
+	notnew := make([]bool, 0, 1000)
+	for i, tr := range ps.traj {
+		r := tr[len(tr)-1]
+		if r.Step != ps.step-1 {
+			continue
+		}
+		for len(ps.pns) < r.Label+1 {
+			ps.pns = append(ps.pns, Pstate{})
+		}
+		q := ps.pns[r.Label]
+		if q.Size > 0 {
+			ps.traj[i] = append(ps.traj[i], q)
+			for len(notnew) < q.Label+1 {
+				notnew = append(notnew, false)
+			}
+			notnew[q.Label] = true
+		}
+	}
+
+	for l2, m2 := range ps.max2 {
+		for len(notnew) < l2+1 {
+			notnew = append(notnew, false)
+		}
+		if l2 != 0 && !notnew[l2] {
+			s2 := ps.size2[l2]
+			bb := ps.bboxes2[l2]
+			v := []Pstate{
+				{
+					Label:     l2,
+					Max:       m2,
+					Size:      s2,
+					Step:      ps.step,
+					Threshold: thresh,
+					Bbox:      bb,
+				},
+			}
+			ps.traj = append(ps.traj, v)
+		}
+	}
 }
 
 // Next adds another labeled image to the persistence graph.  The
@@ -137,70 +240,12 @@ func (ps *Persistence) Next(t int) {
 
 	lbl := NewLabel(ps.timg, ps.rows, ps.lbuf2)
 	ps.lbuf2 = lbl.Labels()
-	size2 := lbl.Sizes()
-	max2 := maxes(ps.lbuf2, ps.img, len(size2), ps.rows)
-	bboxes2 := lbl.Bboxes()
+	ps.size2 = lbl.Sizes(ps.size2)
+	ps.max2 = maxes(ps.lbuf2, ps.max2, ps.img, len(ps.size2), ps.rows)
+	ps.bboxes2 = lbl.Bboxes(ps.bboxes2)
 
-	// pn maps each region from the previous step to
-	// its largest descendent in the current step
-	pn := make([]Pstate, 0, 1000)
-
-	rc := ps.rows * ps.cols
-	for i := 0; i < rc; i++ {
-		if ps.lbuf1[i] == 0 || ps.lbuf2[i] == 0 {
-			continue
-		}
-		l1 := ps.lbuf1[i]
-		l2 := ps.lbuf2[i]
-		s2 := size2[l2]
-		m2 := max2[l2]
-		for len(pn) < l1+1 {
-			pn = append(pn, Pstate{})
-		}
-		mx := pn[l1].Max
-
-		// The favored descendent is the brightest one, which will have the
-		// longest lifespan.  But if the brighness values are tied, go with
-		// the larger region.
-		if m2 > mx || (m2 == mx && s2 > pn[l1].Size) {
-			bb := bboxes2[l2]
-			pn[l1] = Pstate{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}
-		}
-	}
-
-	// Extend each region from the previous step to its descendant
-	// in the current step, where possible
-	notnew := make([]bool, 0, 1000)
-	for i, tr := range ps.traj {
-		r := tr[len(tr)-1]
-		if r.Step != ps.step-1 {
-			continue
-		}
-		for len(pn) < r.Label+1 {
-			pn = append(pn, Pstate{})
-		}
-		q := pn[r.Label]
-		if q.Size > 0 {
-			ps.traj[i] = append(ps.traj[i], q)
-			for len(notnew) < q.Label+1 {
-				notnew = append(notnew, false)
-			}
-			notnew[q.Label] = true
-		}
-	}
-
-	// Add regions that are born in this step.
-	for l2, m2 := range max2 {
-		for len(notnew) < l2+1 {
-			notnew = append(notnew, false)
-		}
-		if l2 != 0 && !notnew[l2] {
-			s2 := size2[l2]
-			bb := bboxes2[l2]
-			v := []Pstate{{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}}
-			ps.traj = append(ps.traj, v)
-		}
-	}
+	ps.getAncestors(t)
+	ps.extend(t)
 }
 
 type spstate [][]Pstate
