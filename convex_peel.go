@@ -6,6 +6,8 @@ import (
 	"gonum.org/v1/gonum/floats"
 )
 
+// ConvexPeel supports calculation of a sequence of convex hulls for
+// a point set.
 type ConvexPeel struct {
 
 	// The points we are working with
@@ -90,7 +92,7 @@ func (cp *ConvexPeel) Centroid() [2]float64 {
 	return cp.centroid
 }
 
-// NumPoints returns the number of active points (i,e, the number
+// NumPoints returns the number of active points (i.e. the number
 // of points that have not been peeled).
 func (cp *ConvexPeel) NumPoints() int {
 	n := 0
@@ -150,13 +152,13 @@ func (cp *ConvexPeel) sort() {
 	for j, i := range ii {
 		u[j] = cp.y[i]
 	}
-	u, cp.y = cp.y, u
+	cp.y = u
 
 	v := make([]bool, len(cp.x))
 	for j, i := range ii {
 		v[j] = cp.skip[i]
 	}
-	v, cp.skip = cp.skip, v
+	cp.skip = v
 }
 
 // Peel removes the current hull points and recomputes the hull.

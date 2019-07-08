@@ -8,7 +8,7 @@ import (
 // Persistence constructs object persistence trajectories for an image.
 type Persistence struct {
 
-	// The dimesnions of the image
+	// The dimensions of the image
 	rows int
 	cols int
 
@@ -16,7 +16,7 @@ type Persistence struct {
 	step int
 
 	// The persistence trajectories
-	traj [][]Prec
+	traj [][]Pstate
 
 	// The original image being processed
 	img []int
@@ -32,12 +32,12 @@ type Persistence struct {
 // of the returned slice is a sequence of states defining a trajectory.
 // The order of the trajectories may be non-deterministic, calling Sort
 // before calling Trajectories ensures a deterministic order.
-func (ps *Persistence) Trajectories() [][]Prec {
+func (ps *Persistence) Trajectories() [][]Pstate {
 	return ps.traj
 }
 
-// Prec defines a state in a persistence trajectory.
-type Prec struct {
+// Pstate defines a state in a persistence trajectory.
+type Pstate struct {
 	Label     int
 	Size      int
 	Max       int
@@ -76,6 +76,9 @@ func maxes(lab, img []int, ncomp, rows int) []int {
 	return mx
 }
 
+// NewPersistence calculates an object persistence diagram for the given image.
+// To produce the persistence information, call the Next method for an increasing
+// sequence of threshold values.  The first threshold value 'low' is provided here.
 func NewPersistence(img []int, rows, low int) *Persistence {
 
 	cols := len(img) / rows
@@ -96,12 +99,12 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 	max2 := maxes(lbuf2, img, len(size2), rows)
 	bboxes2 := lbl.Bboxes()
 
-	var traj [][]Prec
+	var traj [][]Pstate
 	for k, m := range max2 {
 		if k != 0 {
 			s := size2[k]
 			bb := bboxes2[k]
-			v := []Prec{{Label: k, Max: m, Size: s, Step: 0, Threshold: low, Bbox: bb}}
+			v := []Pstate{{Label: k, Max: m, Size: s, Step: 0, Threshold: low, Bbox: bb}}
 			traj = append(traj, v)
 		}
 	}
@@ -117,6 +120,8 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 	}
 }
 
+// Labels returns the current object labels.  Note that the
+// numeric labels are not comparable between calls to Next.
 func (ps *Persistence) Labels() []int {
 	return ps.lbuf2
 }
@@ -138,7 +143,7 @@ func (ps *Persistence) Next(t int) {
 
 	// pn maps each region from the previous step to
 	// its largest descendent in the current step
-	pn := make([]Prec, 0, 1000)
+	pn := make([]Pstate, 0, 1000)
 
 	rc := ps.rows * ps.cols
 	for i := 0; i < rc; i++ {
@@ -150,7 +155,7 @@ func (ps *Persistence) Next(t int) {
 		s2 := size2[l2]
 		m2 := max2[l2]
 		for len(pn) < l1+1 {
-			pn = append(pn, Prec{})
+			pn = append(pn, Pstate{})
 		}
 		mx := pn[l1].Max
 
@@ -159,7 +164,7 @@ func (ps *Persistence) Next(t int) {
 		// the larger region.
 		if m2 > mx || (m2 == mx && s2 > pn[l1].Size) {
 			bb := bboxes2[l2]
-			pn[l1] = Prec{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}
+			pn[l1] = Pstate{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}
 		}
 	}
 
@@ -172,7 +177,7 @@ func (ps *Persistence) Next(t int) {
 			continue
 		}
 		for len(pn) < r.Label+1 {
-			pn = append(pn, Prec{})
+			pn = append(pn, Pstate{})
 		}
 		q := pn[r.Label]
 		if q.Size > 0 {
@@ -192,17 +197,17 @@ func (ps *Persistence) Next(t int) {
 		if l2 != 0 && !notnew[l2] {
 			s2 := size2[l2]
 			bb := bboxes2[l2]
-			v := []Prec{{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}}
+			v := []Pstate{{Label: l2, Max: m2, Size: s2, Step: ps.step, Threshold: t, Bbox: bb}}
 			ps.traj = append(ps.traj, v)
 		}
 	}
 }
 
-type sprec [][]Prec
+type spstate [][]Pstate
 
-func (a sprec) Len() int      { return len(a) }
-func (a sprec) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a sprec) Less(i, j int) bool {
+func (a spstate) Len() int      { return len(a) }
+func (a spstate) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a spstate) Less(i, j int) bool {
 	if a[i][0].Max < a[j][0].Max {
 		return true
 	} else if a[i][0].Max > a[j][0].Max {
@@ -216,6 +221,8 @@ func (a sprec) Less(i, j int) bool {
 	return a[i][0].Label < a[j][0].Label
 }
 
+// Sort gives a deterministic order to the object in the persistence
+// diagram.
 func (ps *Persistence) Sort() {
-	sort.Sort(sort.Reverse(sprec(ps.traj)))
+	sort.Sort(sort.Reverse(spstate(ps.traj)))
 }

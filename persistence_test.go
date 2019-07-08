@@ -10,7 +10,7 @@ var (
 	pertests = []struct {
 		img        [][]int
 		thresholds []int
-		traj       [][]Prec
+		traj       [][]Pstate
 	}{
 		{
 			[][]int{
@@ -24,7 +24,7 @@ var (
 				{0, 0, 0, 0, 0, 0, 0, 0},
 			},
 			[]int{1, 2, 3, 4},
-			[][]Prec{
+			[][]Pstate{
 				{
 					{Label: 1, Size: 36, Max: 3, Step: 0, Threshold: 1, Bbox: image.Rect(1, 1, 7, 7)},
 					{Label: 2, Size: 18, Max: 3, Step: 1, Threshold: 2, Bbox: image.Rect(4, 1, 7, 7)},
@@ -51,7 +51,7 @@ var (
 				{0, 0, 0, 0, 0, 0, 0, 0},
 			},
 			[]int{1, 2, 3, 4, 5, 6, 7, 8, 9},
-			[][]Prec{
+			[][]Pstate{
 				{
 					{Label: 1, Size: 36, Max: 9, Step: 0, Threshold: 1, Bbox: image.Rect(1, 1, 7, 7)},
 					{Label: 1, Size: 31, Max: 9, Step: 1, Threshold: 2, Bbox: image.Rect(1, 1, 7, 7)},
@@ -90,7 +90,7 @@ var (
 				{0, 0, 0, 0, 0, 0, 0, 0},
 			},
 			[]int{1, 5, 6, 7},
-			[][]Prec{
+			[][]Pstate{
 				{
 					{Label: 1, Size: 36, Max: 7, Step: 0, Threshold: 1, Bbox: image.Rect(1, 1, 7, 7)},
 					{Label: 2, Size: 5, Max: 7, Step: 1, Threshold: 5, Bbox: image.Rect(5, 1, 7, 4)},
@@ -151,7 +151,7 @@ func TestPersistence(t *testing.T) {
 	}
 }
 
-func compareTraj(x, y []Prec) bool {
+func compareTraj(x, y []Pstate) bool {
 	if len(x) != len(y) {
 		return false
 	}
