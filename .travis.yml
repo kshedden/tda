@@ -6,6 +6,7 @@ go:
 
 before_install:
  - go get github.com/theodesp/unionfind
+ - go build ./...
 
 go:
    - tip

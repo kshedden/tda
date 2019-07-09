@@ -171,6 +171,25 @@ func (cp *ConvexPeel) Peel() {
 	cp.run()
 }
 
+// PeelTo peels until no more than the given fraction of points remains.
+func (cp *ConvexPeel) PeelTo(frac float64) {
+
+	for {
+		n := 0
+		for i := range cp.skip {
+			if !cp.skip[i] {
+				n++
+			}
+		}
+
+		if float64(n) < frac*float64(len(cp.x)) {
+			break
+		}
+
+		cp.Peel()
+	}
+}
+
 // cross computes the cross product among three points.  The
 // sign of the result indicates whether there is a left turn
 // or a right turn when traversing the three points.

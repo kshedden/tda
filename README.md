@@ -6,3 +6,16 @@
 tda : Topological data analysis in Golang
 =========================================
 
+The tda package provides support for a few methods from topological data analysis.
+
+Currently, methods for gridded data (images) are supported, including:
+
+* Connected component labeling for binary images
+
+* Object persistence diagrams
+
+* Feature generation based on convex peels
+
+See the [examples] directory for some use cases.
+
+![Image of persistence diagram](github.com/kshedden/tda/examples/persistence/persistence.png)

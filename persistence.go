@@ -16,7 +16,7 @@ type Persistence struct {
 	step int
 
 	// The persistence trajectories
-	traj [][]Pstate
+	traj []Trajectory
 
 	// The original image being processed
 	img []int
@@ -37,7 +37,7 @@ type Persistence struct {
 // of the returned slice is a sequence of states defining a trajectory.
 // The order of the trajectories may be non-deterministic, calling Sort
 // before calling Trajectories ensures a deterministic order.
-func (ps *Persistence) Trajectories() [][]Pstate {
+func (ps *Persistence) Trajectories() []Trajectory {
 	return ps.traj
 }
 
@@ -109,7 +109,7 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 	max2 := maxes(lbuf2, nil, img, len(size2), rows)
 	bboxes2 := lbl.Bboxes(nil)
 
-	var traj [][]Pstate
+	var traj []Trajectory
 	for k, m := range max2 {
 		if k != 0 {
 			s := size2[k]
@@ -248,11 +248,16 @@ func (ps *Persistence) Next(t int) {
 	ps.extend(t)
 }
 
-type spstate [][]Pstate
+// Trajectory is a sequence of persistence states defined by
+// labeling an image thresholded at an increasing sequence of
+// threshold values.
+type Trajectory []Pstate
 
-func (a spstate) Len() int      { return len(a) }
-func (a spstate) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a spstate) Less(i, j int) bool {
+type straj []Trajectory
+
+func (a straj) Len() int      { return len(a) }
+func (a straj) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a straj) Less(i, j int) bool {
 	if a[i][0].Max < a[j][0].Max {
 		return true
 	} else if a[i][0].Max > a[j][0].Max {
@@ -269,5 +274,5 @@ func (a spstate) Less(i, j int) bool {
 // Sort gives a deterministic order to the object in the persistence
 // diagram.
 func (ps *Persistence) Sort() {
-	sort.Sort(sort.Reverse(spstate(ps.traj)))
+	sort.Sort(sort.Reverse(straj(ps.traj)))
 }

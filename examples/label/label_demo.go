@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"os"
+	"path"
 
 	"github.com/kshedden/tda"
 )
@@ -18,7 +19,7 @@ const (
 // number of rows in the image.
 func getImage() ([]int, int) {
 
-	fid, err := os.Open(filename)
+	fid, err := os.Open(path.Join("../images", filename))
 	if err != nil {
 		panic(err)
 	}
