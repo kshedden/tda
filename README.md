@@ -18,4 +18,7 @@ Currently, methods for gridded data (images) are supported, including:
 
 See the [examples] directory for some use cases.
 
-![Image of persistence diagram](https://github.com/kshedden/tda/examples/persistence/persistence.png)
+Below is a scatterplot of object birth/death times, with 90%, 95%, and 99% convex hull
+peels plotted in red.  See [examples/persistence] for the code used to produce this plot.
+
+![Image of persistence diagram](https://github.com/kshedden/tda/blob/master/examples/persistence/persistence.png)
