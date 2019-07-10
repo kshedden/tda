@@ -136,14 +136,16 @@ func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 	return x
 }
 
-// Stat contains summary statistics about a landscape profile at a
-// given depth.
+// Stat contains summary statistics about a landscape or convex peel
+// profile at a given depth.
 type Stat struct {
+	Depth     float64
 	Area      float64
 	Perimeter float64
+	Centroid  [2]float64
 }
 
-// Stats returns the area and perimeter for a series of landscape
+// Stats obtains the area, perimeter, and centroid for a series of landscape
 // profiles.  The landscape function is evaluated on a grid of npoints
 // points from low to high, at the given depths.
 func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
@@ -164,9 +166,23 @@ func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
 			// Perimeter
 			u := lastx[j] - x[j]
 			r[j].Perimeter += math.Sqrt(d*d + u*u)
+
+			// Centroid
+			r[j].Centroid[0] += t
+			r[j].Centroid[1] += x[j]
+			if i == 1 {
+				r[j].Centroid[0] += low
+				r[j].Centroid[1] += lastx[j]
+			}
 		}
 
 		lastx = x
+	}
+
+	for j := range depth {
+		r[j].Centroid[0] /= float64(npoints)
+		r[j].Centroid[1] /= float64(npoints)
+		r[j].Depth = float64(depth[j])
 	}
 
 	return r

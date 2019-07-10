@@ -29,14 +29,17 @@ var (
 			},
 			stats: []Stat{
 				{
+					Depth:     0,
 					Area:      8.996252,
 					Perimeter: 10.412776,
 				},
 				{
+					Depth:     1,
 					Area:      3.998344,
 					Perimeter: 9.575754,
 				},
 				{
+					Depth:     2,
 					Area:      0.999584,
 					Perimeter: 8.741379,
 				},
@@ -54,14 +57,17 @@ var (
 			},
 			stats: []Stat{
 				{
+					Depth:     0,
 					Area:      6.497293,
 					Perimeter: 10.394622,
 				},
 				{
+					Depth:     1,
 					Area:      3.248646,
 					Perimeter: 9.916544,
 				},
 				{
+					Depth:     2,
 					Area:      0,
 					Perimeter: 8,
 				},

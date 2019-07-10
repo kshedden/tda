@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"path"
 
@@ -22,7 +23,7 @@ const (
 
 var (
 	// Plot the kth largest landscapes, for these values of k.
-	kpt = []int{10, 30, 50, 70, 90, 110, 130, 150, 170}
+	depth = []int{10, 30, 50, 70, 90, 110, 130, 150, 170}
 )
 
 func diagram(birth, death, tvals []float64, lsc [][]float64) {
@@ -50,7 +51,7 @@ func diagram(birth, death, tvals []float64, lsc [][]float64) {
 	plt.Add(s)
 
 	// Plot a sequence of landscapes in red
-	for j := 0; j < len(kpt); j++ {
+	for j := 0; j < len(depth); j++ {
 
 		lpts := make(plotter.XYs, len(tvals))
 		for i := range tvals {
@@ -86,6 +87,12 @@ func main() {
 
 	ls := tda.NewLandscape(birth, death)
 
+	fmt.Printf("Landscape statistics:\n")
+	stats := ls.Stats(depth, 2000, 80000, 100)
+	for _, st := range stats {
+		fmt.Printf("%+v\n", st)
+	}
+
 	d := floats.Min(birth)
 	r := floats.Max(death) - d
 	var lsc [][]float64
@@ -93,7 +100,7 @@ func main() {
 	for i := 0; i < npoint; i++ {
 		t := d + float64(i)*r/float64(npoint-1)
 		tvals = append(tvals, t)
-		kp := ls.Eval(t, kpt)
+		kp := ls.Eval(t, depth)
 		lsc = append(lsc, kp)
 	}
 

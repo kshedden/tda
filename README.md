@@ -34,3 +34,9 @@ See [examples/landscape](http://github.com/kshedden/tda/tree/master/examples/lan
 for the code used to produce this plot.
 
 ![Image of landscape diagram](https://github.com/kshedden/tda/blob/master/examples/landscape/landscape.png)
+
+Below is an animated PNG showing the above image being thresholded at a sequence of values.
+See [examples/animate_threshold](http://github.com/kshedden/tda/tree/master/examples/animate_threshold)
+for the code used to produce this plot.
+
+![Animation of image thresholding](https://github.com/kshedden/tda/blob/master/examples/images/cells.apng)

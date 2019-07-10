@@ -173,6 +173,45 @@ func (cp *ConvexPeel) Peel() {
 	cp.run()
 }
 
+// Reset returns to the original state, with no points having been peeled.
+func (cp *ConvexPeel) Reset() {
+
+	for i := range cp.skip {
+		cp.skip[i] = false
+	}
+
+	cp.run()
+}
+
+// Stats obtains the area, perimeter, and centroid for a series of convex peel
+// profiles of a point set.  The convex peel is constructed for a grid of npoints
+// depth values spanning from from high to low.
+func (cp *ConvexPeel) Stats(depth []float64) []Stat {
+
+	cp.Reset()
+
+	for j := 1; j < len(depth); j++ {
+		if depth[j] >= depth[j-1] {
+			panic("depth values must be decreasing")
+		}
+	}
+
+	var stats []Stat
+
+	for _, f := range depth {
+		cp.PeelTo(f)
+		stat := Stat{
+			Depth:     f,
+			Area:      cp.Area(),
+			Perimeter: cp.Perimeter(),
+			Centroid:  cp.Centroid(),
+		}
+		stats = append(stats, stat)
+	}
+
+	return stats
+}
+
 // PeelTo peels until no more than the given fraction of points
 // remains.
 func (cp *ConvexPeel) PeelTo(frac float64) {
