@@ -44,7 +44,7 @@ func TestLandscape(t *testing.T) {
 		ls := NewLandscape(tst.birth, tst.death)
 
 		for j, kx := range tst.kpt {
-			kf := ls.Kmax(kx, []int{0, 1, 2})
+			kf := ls.Eval(kx, []int{0, 1, 2})
 
 			if !floats.EqualApprox(kf, tst.kmax[j], 1e-8) {
 				fmt.Printf("Landscape test %d failed on point %d\n", jt, j)

@@ -13,27 +13,30 @@ type Label struct {
 	rows int
 	cols int
 
-	// The binary image (coded 0/1) used to define the connected regions.
+	// The binary image (coded 0/1) used to define the connected
+	// regions.
 	mask []uint8
 
-	// This is used to track labels of regions that need to be merged
+	// This is used to track labels of regions that need to be
+	// merged
 	uf *unionfind.UnionFind
 
 	// The labels of the connected regions
 	labels []int
 
-	// The number of components, including the background.  The greatest component
-	// label is ncomp-1.
+	// The number of components, including the background.  The
+	// greatest component label is ncomp-1.
 	ncomp int
 }
 
-// NewLabel finds the connected components of a given binary image (mask),
-// which is rectangular with the given number of rows.  buf is an optional
-// memory buffer having the same length as mask.  Use the methods of the
-// returned Label value to obtain information about the labels.
+// NewLabel finds the connected components of a given binary image
+// (mask), which is rectangular with the given number of rows.  buf is
+// an optional memory buffer having the same length as mask.  Use the
+// methods of the returned Label value to obtain information about the
+// labels.
 //
-// The algorithm implemented here is the run-based algorithm of
-// He et al. (2008), IEEE Transactions on Image Processing, 17:5.
+// The algorithm implemented here is the run-based algorithm of He et
+// al. (2008), IEEE Transactions on Image Processing, 17:5.
 // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4472694
 func NewLabel(mask []uint8, rows int, buf []int) *Label {
 
@@ -84,9 +87,9 @@ func (la *Label) init() {
 	}
 }
 
-// nextRun finds the next run of 1's in row i of the image,
-// starting from column j1.  The image has c columns.  The
-// returned values [j1, j2) span the run.
+// nextRun finds the next run of 1's in row i of the image, starting
+// from column j1.  The image has c columns.  The returned values [j1,
+// j2) span the run.
 func (la *Label) nextRun(i, j1, c int) (int, int) {
 
 	// Find the beginning of a run
@@ -112,9 +115,9 @@ func (la *Label) label() {
 	la.labelPass3()
 }
 
-// NumComponents returns the number of components, including the background
-// component.  The maximum component label is one less than the number of
-// components.
+// NumComponents returns the number of components, including the
+// background component.  The maximum component label is one less than
+// the number of components.
 func (la *Label) NumComponents() int {
 	return la.ncomp
 }
@@ -137,7 +140,8 @@ func (la *Label) labelPass1() {
 				break
 			}
 
-			// Find all runs in the previous row that overlap with the current run
+			// Find all runs in the previous row that
+			// overlap with the current run
 			k1 = j1 - 1
 			first := true
 			var vf int
@@ -217,9 +221,10 @@ func (la *Label) labelPass3() {
 	}
 }
 
-// Sizes returns the sizes (number of pixels) in every labeled component
-// of the array.  The size of the component with label k is held in position
-// k of the returned slice.  The provided buffer will be used if large enough.
+// Sizes returns the sizes (number of pixels) in every labeled
+// component of the array.  The size of the component with label k is
+// held in position k of the returned slice.  The provided buffer will
+// be used if large enough.
 func (la *Label) Sizes(buf []int) []int {
 
 	if cap(buf) < la.ncomp {
@@ -238,9 +243,9 @@ func (la *Label) Sizes(buf []int) []int {
 	return buf
 }
 
-// Bboxes returns the bounding boxes for every labeled component.
-// The bounding box for the component with label k is held in position
-// k of the returned slice.  The provided slice is used if large enough.
+// Bboxes returns the bounding boxes for every labeled component.  The
+// bounding box for the component with label k is held in position k
+// of the returned slice.  The provided slice is used if large enough.
 func (la *Label) Bboxes(buf []image.Rectangle) []image.Rectangle {
 
 	buf = buf[0:0]
@@ -287,13 +292,13 @@ func (la *Label) Mask() []uint8 {
 	return la.mask
 }
 
-// Rows returns the number of rows in the image that is
-// being labeled.
+// Rows returns the number of rows in the image that is being labeled.
 func (la *Label) Rows() int {
 	return la.rows
 }
 
-// Cols returns the number of columns in the image that is being labeled.
+// Cols returns the number of columns in the image that is being
+// labeled.
 func (la *Label) Cols() int {
 	return la.cols
 }

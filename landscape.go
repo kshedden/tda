@@ -5,6 +5,8 @@ import (
 	"sort"
 )
 
+// Landscape supports construction of landscape diagrams for
+// describing the persistence homology of an image.
 type Landscape struct {
 
 	// Birth times
@@ -23,7 +25,13 @@ type Landscape struct {
 	index [][]int
 }
 
+// NewLandscape returns a Landscape value for the given object birth
+// and death times.
 func NewLandscape(birth, death []float64) *Landscape {
+
+	if len(birth) != len(death) {
+		panic("birth and death slices must have the same length")
+	}
 
 	ls := &Landscape{
 		birth: birth,
@@ -55,7 +63,8 @@ func (ls *Landscape) init() {
 	di = di[0:j]
 	ls.distinct = di
 
-	// Determine which observed intervals cover each elementary interval.
+	// Determine which observed intervals cover each elementary
+	// interval.
 	ls.index = make([][]int, len(di))
 	for i := range ls.birth {
 		j0 := sort.SearchFloat64s(di, ls.birth[i])
@@ -82,7 +91,10 @@ func maxi(x []int) int {
 	return m
 }
 
-func (ls *Landscape) Kmax(t float64, k []int) []float64 {
+// Eval evaluates the landscape at a series of depths, at a given
+// point t.  Depth=0 corresponds to the maximum landscape pofile,
+// depth=1 corresponds to the second highest landscape profile etc.
+func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 
 	ii := sort.SearchFloat64s(ls.distinct, t)
 	if ls.distinct[ii] != t {
@@ -103,7 +115,7 @@ func (ls *Landscape) Kmax(t float64, k []int) []float64 {
 	x = x[0:j]
 
 	// Zeros are not included above, append them here if needed
-	mx := maxi(k)
+	mx := maxi(depth)
 	for len(x) <= mx {
 		x = append(x, 0)
 	}
@@ -111,31 +123,42 @@ func (ls *Landscape) Kmax(t float64, k []int) []float64 {
 	sort.Sort(sort.Reverse(sort.Float64Slice(x)))
 
 	// Get the requested positions
-	for p, q := range k {
+	for p, q := range depth {
 		x[p] = x[q]
 	}
-	x = x[0:len(k)]
+	x = x[0:len(depth)]
 
 	return x
 }
 
-func (ls *Landscape) Stats(kpt []int, low, high float64, npoints int) [][2]float64 {
+// Stat contains summary statistics about a landscape profile at a
+// given depth.
+type Stat struct {
+	Area      float64
+	Perimeter float64
+}
+
+// Stats returns the area and perimeter for a series of landscape
+// profiles.  The landscape function is evaluated on a grid of npoints
+// points from low to high, at the given depths.
+func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
 
 	d := (high - low) / float64(npoints)
 
-	r := make([][2]float64, len(kpt))
+	r := make([]Stat, len(depth))
 
-	lastx := ls.Kmax(low, kpt)
+	lastx := ls.Eval(low, depth)
 	for i := 1; i < npoints; i++ {
 		t := low + float64(i)*d
-		x := ls.Kmax(t, kpt)
+		x := ls.Eval(t, depth)
 
-		for j := range kpt {
+		for j := range depth {
 			// Area
-			r[j][0] += d * (x[j] + lastx[j]) / 2
+			r[j].Area += d * (x[j] + lastx[j]) / 2
+
 			// Perimeter
 			u := lastx[j] - x[j]
-			r[j][1] += math.Sqrt(d*d + u*u)
+			r[j].Perimeter += math.Sqrt(d*d + u*u)
 		}
 
 		lastx = x

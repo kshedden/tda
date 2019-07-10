@@ -93,7 +93,7 @@ func main() {
 	for i := 0; i < npoint; i++ {
 		t := d + float64(i)*r/float64(npoint-1)
 		tvals = append(tvals, t)
-		kp := ls.Kmax(t, kpt)
+		kp := ls.Eval(t, kpt)
 		lsc = append(lsc, kp)
 	}
 

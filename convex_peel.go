@@ -6,23 +6,25 @@ import (
 	"gonum.org/v1/gonum/floats"
 )
 
-// ConvexPeel supports calculation of a sequence of convex hulls for
-// a point set.
+// ConvexPeel supports calculation of a sequence of convex hulls for a
+// point set.
 type ConvexPeel struct {
 
 	// The points we are working with
 	x []float64
 	y []float64
 
-	// The angles of all points with respect to the reference point
+	// The angles of all points with respect to the reference
+	// point
 	ang []float64
 
-	// The points that have been masked because they were already peeled
+	// The points that have been masked because they were already
+	// peeled
 	skip []bool
 
-	// The points that have been masked because they were already peeled,
-	// or because they have collinearity with points that are further from
-	// the reference point.
+	// The points that have been masked because they were already
+	// peeled, or because they have collinearity with points that
+	// are further from the reference point.
 	skip2 []bool
 
 	// The index positions of the current hull points
@@ -32,8 +34,8 @@ type ConvexPeel struct {
 	centroid [2]float64
 }
 
-// NewConvexPeel calculates a sequence of peeled convex hulls
-// for the given points.
+// NewConvexPeel calculates a sequence of peeled convex hulls for the
+// given points.
 func NewConvexPeel(x, y []float64) *ConvexPeel {
 
 	if len(x) != len(y) {
@@ -86,14 +88,14 @@ func (cp *ConvexPeel) getCentroid() {
 	cp.centroid[1] /= float64(n)
 }
 
-// Centroid returns the centroid of the current point set,
-// i.e. the points that have not been peeled.
+// Centroid returns the centroid of the current point set, i.e. the
+// points that have not been peeled.
 func (cp *ConvexPeel) Centroid() [2]float64 {
 	return cp.centroid
 }
 
-// NumPoints returns the number of active points (i.e. the number
-// of points that have not been peeled).
+// NumPoints returns the number of active points (i.e. the number of
+// points that have not been peeled).
 func (cp *ConvexPeel) NumPoints() int {
 	n := 0
 	for i := range cp.skip {
@@ -105,8 +107,8 @@ func (cp *ConvexPeel) NumPoints() int {
 	return n
 }
 
-// sort finds a reference point, and sorts the points by angle relative to this
-// reference point.
+// sort finds a reference point, and sorts the points by angle
+// relative to this reference point.
 func (cp *ConvexPeel) sort() {
 
 	// Find a reference point with the least y coordinate.  If
@@ -171,7 +173,8 @@ func (cp *ConvexPeel) Peel() {
 	cp.run()
 }
 
-// PeelTo peels until no more than the given fraction of points remains.
+// PeelTo peels until no more than the given fraction of points
+// remains.
 func (cp *ConvexPeel) PeelTo(frac float64) {
 
 	for {
@@ -190,9 +193,9 @@ func (cp *ConvexPeel) PeelTo(frac float64) {
 	}
 }
 
-// cross computes the cross product among three points.  The
-// sign of the result indicates whether there is a left turn
-// or a right turn when traversing the three points.
+// cross computes the cross product among three points.  The sign of
+// the result indicates whether there is a left turn or a right turn
+// when traversing the three points.
 func (cp *ConvexPeel) cross(i0, i1, i2 int) float64 {
 	f := (cp.x[i1] - cp.x[i0]) * (cp.y[i2] - cp.y[i0])
 	g := (cp.y[i1] - cp.y[i0]) * (cp.x[i2] - cp.x[i0])
@@ -200,9 +203,8 @@ func (cp *ConvexPeel) cross(i0, i1, i2 int) float64 {
 }
 
 // setSkip identifies points that need to be skipped either because
-// they have been previously peeled off, or because they
-// are not the longest point along a ray beginning at the reference
-// point.
+// they have been previously peeled off, or because they are not the
+// longest point along a ray beginning at the reference point.
 func (cp *ConvexPeel) setSkip() {
 
 	tol := 1e-12
@@ -279,8 +281,7 @@ func (cp *ConvexPeel) Perimeter() float64 {
 	return per
 }
 
-// HullPoints returns the points that are on the current convex
-// hull.
+// HullPoints returns the points that are on the current convex hull.
 func (cp *ConvexPeel) HullPoints(buf [][2]float64) [][2]float64 {
 
 	buf = buf[0:0]
