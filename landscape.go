@@ -97,6 +97,12 @@ func maxi(x []int) int {
 func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 
 	ii := sort.SearchFloat64s(ls.distinct, t)
+
+	// The evaluation point does not fall under any tents.
+	if ii == 0 || ii == len(ls.distinct) {
+		return make([]float64, len(depth))
+	}
+
 	if ls.distinct[ii] != t {
 		ii--
 	}
@@ -126,7 +132,6 @@ func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 	for p, q := range depth {
 		x[p] = x[q]
 	}
-	x = x[0:len(depth)]
 
 	return x
 }

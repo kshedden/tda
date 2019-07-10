@@ -14,6 +14,8 @@ Currently, methods for gridded data (images) are provided, including:
 
 * Object persistence analysis
 
+* Landscape profiles
+
 * Convex hull peels
 
 See the [examples](http://github.com/kshedden/tda/tree/master/examples) directory for some use cases.
