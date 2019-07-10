@@ -2,6 +2,7 @@ package tda
 
 import (
 	"fmt"
+	"math"
 	"testing"
 
 	"gonum.org/v1/gonum/floats"
@@ -28,16 +29,16 @@ var (
 			},
 			stats: []Stat{
 				{
-					Area:      8.9856,
-					Perimeter: 10.1973668,
+					Area:      8.996252,
+					Perimeter: 10.412776,
 				},
 				{
-					Area:      4,
-					Perimeter: 9.42816,
+					Area:      3.998344,
+					Perimeter: 9.575754,
 				},
 				{
-					Area:      0,
-					Perimeter: 0,
+					Area:      0.999584,
+					Perimeter: 8.741379,
 				},
 			},
 		},
@@ -53,16 +54,16 @@ var (
 			},
 			stats: []Stat{
 				{
-					Area:      0,
-					Perimeter: 0,
+					Area:      6.497293,
+					Perimeter: 10.394622,
+				},
+				{
+					Area:      3.248646,
+					Perimeter: 9.916544,
 				},
 				{
 					Area:      0,
-					Perimeter: 0,
-				},
-				{
-					Area:      0,
-					Perimeter: 0,
+					Perimeter: 8,
 				},
 			},
 		},
@@ -75,8 +76,6 @@ func TestLandscape(t *testing.T) {
 
 		ls := NewLandscape(tst.birth, tst.death)
 
-		//TODO: stats is currently untested
-
 		for j, kx := range tst.pts {
 			kf := ls.Eval(kx, tst.depth)
 
@@ -87,6 +86,18 @@ func TestLandscape(t *testing.T) {
 			}
 		}
 
-		fmt.Printf("%v\n", ls.Stats(tst.depth, 1, 9, 50))
+		stats := ls.Stats(tst.depth, 1, 9, 50)
+		for j := range stats {
+			if math.Abs(stats[j].Area-tst.stats[j].Area) > 1e-5 {
+				fmt.Printf("Landscale area disagrees for test %d, point %d\n", jt, j)
+				fmt.Printf("Expected %f, got %f\n", tst.stats[j].Area, stats[j].Area)
+				t.Fail()
+			}
+			if math.Abs(stats[j].Perimeter-tst.stats[j].Perimeter) > 1e-5 {
+				fmt.Printf("Landscale perimeter disagrees for test %d, point %d\n", jt, j)
+				fmt.Printf("Expected %f, got %f\n", tst.stats[j].Perimeter, stats[j].Perimeter)
+				t.Fail()
+			}
+		}
 	}
 }

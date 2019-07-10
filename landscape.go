@@ -148,7 +148,7 @@ type Stat struct {
 // points from low to high, at the given depths.
 func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
 
-	d := (high - low) / float64(npoints)
+	d := (high - low) / float64(npoints-1)
 
 	r := make([]Stat, len(depth))
 
