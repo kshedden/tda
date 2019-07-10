@@ -6,9 +6,7 @@ import (
 	"github.com/theodesp/unionfind"
 )
 
-// https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4472694
-
-// Label finds the connected regions in a binary image.
+// Label finds the connected components in a binary image.
 type Label struct {
 
 	// The dimensions of the image that is being processed
@@ -31,7 +29,12 @@ type Label struct {
 
 // NewLabel finds the connected components of a given binary image (mask),
 // which is rectangular with the given number of rows.  buf is an optional
-// memory buffer having the same length as mask.
+// memory buffer having the same length as mask.  Use the methods of the
+// returned Label value to obtain information about the labels.
+//
+// The algorithm implemented here is the run-based algorithm of
+// He et al. (2008), IEEE Transactions on Image Processing, 17:5.
+// https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4472694
 func NewLabel(mask []uint8, rows int, buf []int) *Label {
 
 	cols := len(mask) / rows
@@ -71,24 +74,35 @@ func (la *Label) init() {
 		la.mask[i*c+c-1] = 0
 	}
 
-	if len(la.labels) != r*c {
+	if cap(la.labels) < r*c {
 		la.labels = make([]int, r*c)
 	} else {
+		la.labels = la.labels[0 : r*c]
 		for i := range la.labels {
 			la.labels[i] = 0
 		}
 	}
 }
 
+// nextRun finds the next run of 1's in row i of the image,
+// starting from column j1.  The image has c columns.  The
+// returned values [j1, j2) span the run.
 func (la *Label) nextRun(i, j1, c int) (int, int) {
+
+	// Find the beginning of a run
 	var j2 int
 	for ; j1 < c && la.mask[i*c+j1] == 0; j1++ {
 	}
+
+	// No run was found
 	if j1 == c {
 		return -1, -1
 	}
+
+	// Find the end of the run
 	for j2 = j1 + 1; j2 < c && la.mask[i*c+j2] == 1; j2++ {
 	}
+
 	return j1, j2
 }
 
@@ -96,15 +110,6 @@ func (la *Label) label() {
 	la.labelPass1()
 	la.labelPass2()
 	la.labelPass3()
-
-	// Count the number of components.
-	la.ncomp = 0
-	for _, v := range la.labels {
-		if v > la.ncomp {
-			la.ncomp = v
-		}
-	}
-	la.ncomp++
 }
 
 // NumComponents returns the number of components, including the background
@@ -116,7 +121,7 @@ func (la *Label) NumComponents() int {
 
 // Use a row-scanning algorithm to identify candidate labels.  Labels
 // that need to be merged are stored in a union-find data structure,
-// but the actual labels remain unadjusted on exit.
+// but the actual labels remain unadjusted on exit from this function.
 func (la *Label) labelPass1() {
 
 	c := la.cols
@@ -195,15 +200,18 @@ func (la *Label) labelPass3() {
 		cnt[v]++
 	}
 
-	k := 0
+	// mp defines a mapping from old labels to new labels
+	ncomp := 0
 	mp := make([]int, len(cnt))
 	for j := range cnt {
 		if cnt[j] > 0 {
-			mp[j] = k
-			k++
+			mp[j] = ncomp
+			ncomp++
 		}
 	}
+	la.ncomp = ncomp
 
+	// Update the labels
 	for i := range la.labels {
 		la.labels[i] = mp[la.labels[i]]
 	}

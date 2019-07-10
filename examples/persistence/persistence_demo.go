@@ -9,8 +9,6 @@ package main
 
 import (
 	"image/color"
-	"image/jpeg"
-	"os"
 	"path"
 
 	"github.com/kshedden/tda"
@@ -23,38 +21,7 @@ const (
 	filename string = "HeLa_cells_stained_with_antibody_to_actin_(green)_,_vimentin_(red)_and_DNA_(blue).jpg"
 )
 
-// getImage returns the pixel values as greyscale levels, along with the
-// number of rows in the image.
-func getImage() ([]int, int) {
-
-	fid, err := os.Open(path.Join("../images", filename))
-	if err != nil {
-		panic(err)
-	}
-	defer fid.Close()
-
-	img, err := jpeg.Decode(fid)
-	if err != nil {
-		panic(err)
-	}
-
-	imb := img.Bounds()
-	imd := make([]int, imb.Max.X*imb.Max.Y)
-
-	ii := 0
-	for y := 0; y < imb.Max.Y; y++ {
-		for x := 0; x < imb.Max.X; x++ {
-			c := img.At(x, y)
-			r, g, b, _ := c.RGBA()
-			imd[ii] = int(0.21*float64(r) + 0.72*float64(g) + 0.07*float64(b))
-			ii++
-		}
-	}
-
-	return imd, imb.Max.Y
-}
-
-func diagram(traj []tda.Trajectory) {
+func diagram(birth, death []float64) {
 
 	plt, err := plot.New()
 	if err != nil {
@@ -66,18 +33,10 @@ func diagram(traj []tda.Trajectory) {
 	plt.Y.Label.Text = "Death"
 
 	// Get the birth and death times for each object
-	pts := make(plotter.XYs, len(traj))
-	births := make([]float64, len(traj))
-	deaths := make([]float64, len(traj))
-	for i, tr := range traj {
-
-		// The threshold at which the object first appears.
-		pts[i].X = float64(tr[0].Threshold)
-		births[i] = float64(tr[0].Threshold)
-
-		// The last threshold before the object dissappears
-		pts[i].Y = float64(tr[len(tr)-1].Threshold)
-		deaths[i] = float64(tr[len(tr)-1].Threshold)
+	pts := make(plotter.XYs, len(birth))
+	for i := range birth {
+		pts[i].X = birth[i]
+		pts[i].Y = death[i]
 	}
 
 	s, err := plotter.NewScatter(pts)
@@ -87,7 +46,7 @@ func diagram(traj []tda.Trajectory) {
 	plt.Add(s)
 
 	// Plot a sequence of convex hull peels in red
-	cp := tda.NewConvexPeel(births, deaths)
+	cp := tda.NewConvexPeel(birth, death)
 	for _, frac := range []float64{0.99, 0.95, 0.9} {
 		cp.PeelTo(frac)
 		hp := cp.HullPoints(nil)
@@ -115,7 +74,7 @@ func diagram(traj []tda.Trajectory) {
 
 func main() {
 
-	img, rows := getImage()
+	img, rows := tda.GetImage(path.Join("../images", filename))
 
 	// Calculate persistence trajectories using an
 	// increasing sequence of thresholds
@@ -124,7 +83,7 @@ func main() {
 		ps.Next(t)
 	}
 
-	traj := ps.Trajectories()
+	birth, death := ps.BirthDeath()
 
-	diagram(traj)
+	diagram(birth, death)
 }

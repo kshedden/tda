@@ -27,10 +27,18 @@ type Persistence struct {
 	// The current and previous labeled image
 	lbuf1, lbuf2 []int
 
-	size2   []int
-	max2    []int
+	// The current distribution of sizes
+	size2 []int
+
+	// The current distribution of maximum intensities
+	max2 []int
+
+	// The current set of bounding boxes
 	bboxes2 []image.Rectangle
-	pns     []Pstate
+
+	// Link each region in the previous image to its descendent in the
+	// current image
+	pns []Pstate
 }
 
 // Trajectories returns the persistence trajectories.  Each outer element
@@ -43,12 +51,40 @@ func (ps *Persistence) Trajectories() []Trajectory {
 
 // Pstate defines a state in a persistence trajectory.
 type Pstate struct {
-	Label     int
-	Size      int
-	Max       int
-	Step      int
+
+	// The connected component label for the object (not
+	// comparable across points on a trajectory).
+	Label int
+
+	// The size in pixels of the object.
+	Size int
+
+	// The maximum intensity of the object.
+	Max int
+
+	// The step of the algorithm at which the state is defined.
+	Step int
+
+	// The threshold used to define the image used at this step
+	// of the algorithm.
 	Threshold int
-	Bbox      image.Rectangle
+
+	// A bounding box for the object
+	Bbox image.Rectangle
+}
+
+// BirthDeath returns the object birth and death times as
+// float64 slices.
+func (ps *Persistence) BirthDeath() ([]float64, []float64) {
+
+	var birth, death []float64
+
+	for _, tr := range ps.traj {
+		birth = append(birth, float64(tr[0].Threshold))
+		death = append(death, float64(tr[len(tr)-1].Threshold))
+	}
+
+	return birth, death
 }
 
 func threshold(img []int, timg []uint8, thresh int) []uint8 {
@@ -74,6 +110,9 @@ func maxes(lab, max2, img []int, ncomp, rows int) []int {
 		max2 = make([]int, ncomp)
 	} else {
 		max2 = max2[0:ncomp]
+		for j := range max2 {
+			max2[j] = 0
+		}
 	}
 
 	for i := range lab {
@@ -271,8 +310,8 @@ func (a straj) Less(i, j int) bool {
 	return a[i][0].Label < a[j][0].Label
 }
 
-// Sort gives a deterministic order to the object in the persistence
-// diagram.
+// Sort gives a deterministic order to the persistence
+// trajectories.
 func (ps *Persistence) Sort() {
 	sort.Sort(sort.Reverse(straj(ps.traj)))
 }

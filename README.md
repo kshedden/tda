@@ -26,3 +26,9 @@ peels plotted in red.  See
 for the code used to produce this plot.
 
 ![Image of persistence diagram](https://github.com/kshedden/tda/blob/master/examples/persistence/persistence.png)
+
+Below is a landscape plot based on the same image used above.
+See [examples/landscape](http://github.com/kshedden/tda/tree/master/examples/landscape)
+for the code used to produce this plot.
+
+![Image of landscape diagram](https://github.com/kshedden/tda/blob/master/examples/landscape/landscape.png)
