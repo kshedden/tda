@@ -39,7 +39,7 @@ func GetImage(filename string) ([]int, int) {
 			panic(err)
 		}
 	default:
-		panic("Unkown image format")
+		panic("Unknown image format")
 	}
 
 	imb := img.Bounds()
@@ -62,9 +62,10 @@ func GetImage(filename string) ([]int, int) {
 // versions of an image.  The image pixel data are provided as a slice of integers,
 // which must conform to a rectangular image with the given number of rows.
 // The animation is based on a series of steps in which the image is thresholded
-// at a linear sequence of values ranging from low to high.  The image is
+// at a linear sequence of values ranging from the minimum to the maximum
+// pixel intensity.  The image is
 // written in animated png (.apng) format to the given file.
-func AnimateThreshold(img []int, rows, low, high, steps int, filename string) {
+func AnimateThreshold(img []int, rows, steps int, outfile string) {
 
 	cols := len(img) / rows
 	if len(img) != rows*cols {
@@ -75,9 +76,11 @@ func AnimateThreshold(img []int, rows, low, high, steps int, filename string) {
 		Frames: make([]apng.Frame, steps),
 	}
 
+	mn, mx := iminmax(img)
+
 	for i := 0; i < steps; i++ {
 
-		thresh := low + int(float64(i*(high-low))/float64(steps-1))
+		thresh := mn + int(float64(i*(mx-mn))/float64(steps-1))
 
 		imb := image.NewGray16(image.Rect(0, 0, cols, rows))
 
@@ -96,7 +99,7 @@ func AnimateThreshold(img []int, rows, low, high, steps int, filename string) {
 		a.Frames[i].Image = imb
 	}
 
-	out, err := os.Create(filename)
+	out, err := os.Create(outfile)
 	if err != nil {
 		panic(err)
 	}
@@ -152,6 +155,10 @@ func (lsp *LandscapePlot) checkArgs() {
 
 	if lsp.Isteps == 0 {
 		panic("Isteps must be positive")
+	}
+
+	if lsp.Lsteps == 0 {
+		panic("Lsteps must be positive")
 	}
 
 	if len(lsp.Depth) == 0 {

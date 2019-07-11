@@ -31,5 +31,5 @@ func main() {
 		}
 	}
 
-	tda.AnimateThreshold(img2, ywid, 100, 80000, 200, "../images/cells.apng")
+	tda.AnimateThreshold(img2, ywid, 200, "../images/cells.apng")
 }

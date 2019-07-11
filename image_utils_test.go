@@ -26,5 +26,5 @@ func TestAnimateThreshold(t *testing.T) {
 		}
 	}
 
-	AnimateThreshold(img, n, 100, 500, 100, "test1.apng")
+	AnimateThreshold(img, n, 100, "test1.apng")
 }

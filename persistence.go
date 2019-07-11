@@ -5,14 +5,16 @@ import (
 	"sort"
 )
 
-// Persistence constructs object persistence trajectories for an image.
+// Persistence constructs object persistence trajectories for an
+// image.
 type Persistence struct {
 
 	// The dimensions of the image
 	rows int
 	cols int
 
-	// The current step, 1 plus the number of times that Next was called.
+	// The current step, 1 plus the number of times that Next was
+	// called.
 	step int
 
 	// The persistence trajectories
@@ -44,10 +46,11 @@ type Persistence struct {
 	pns []Pstate
 }
 
-// Trajectories returns the persistence trajectories.  Each outer element
-// of the returned slice is a sequence of states defining a trajectory.
-// The order of the trajectories may be non-deterministic, calling Sort
-// before calling Trajectories ensures a deterministic order.
+// Trajectories returns the persistence trajectories.  Each outer
+// element of the returned slice is a sequence of states defining a
+// trajectory.  The order of the trajectories may be
+// non-deterministic, calling Sort before calling Trajectories ensures
+// a deterministic order.
 func (ps *Persistence) Trajectories() []Trajectory {
 	return ps.traj
 }
@@ -68,16 +71,16 @@ type Pstate struct {
 	// The step of the algorithm at which the state is defined.
 	Step int
 
-	// The threshold used to define the image used at this step
-	// of the algorithm.
+	// The threshold used to define the image used at this step of
+	// the algorithm.
 	Threshold int
 
 	// A bounding box for the object
 	Bbox image.Rectangle
 }
 
-// BirthDeath returns the object birth and death times as
-// float64 slices.
+// BirthDeath returns the object birth and death times as float64
+// slices.
 func (ps *Persistence) BirthDeath() ([]float64, []float64) {
 
 	var birth, death []float64
@@ -128,9 +131,10 @@ func maxes(lab, max2, img []int, ncomp, rows int) []int {
 	return max2
 }
 
-// NewPersistence calculates an object persistence diagram for the given image,
-// which must be rectangular with the given number of rows.  The steps argument
-// determines the threshold increments used to produce the persistence diagram.
+// NewPersistence calculates an object persistence diagram for the
+// given image, which must be rectangular with the given number of
+// rows.  The steps argument determines the threshold increments used
+// to produce the persistence diagram.
 func NewPersistence(img []int, rows, steps int) *Persistence {
 
 	cols := len(img) / rows
@@ -198,8 +202,7 @@ func NewPersistence(img []int, rows, steps int) *Persistence {
 	return per
 }
 
-// Labels returns the current object labels.  Note that the
-// numeric labels are not comparable between calls to Next.
+// Labels returns the current object labels.
 func (ps *Persistence) Labels() []int {
 	return ps.lbuf2
 }
@@ -222,9 +225,10 @@ func (ps *Persistence) getAncestors(thresh int) {
 		}
 		mx := ps.pns[l1].Max
 
-		// The favored descendent is the brightest one, which will have the
-		// longest lifespan.  But if the brighness values are tied, go with
-		// the larger region.
+		// The favored descendent is the brightest one, which
+		// will have the longest lifespan.  But if the
+		// brightness values are tied, go with the larger
+		// region.
 		if m2 > mx || (m2 == mx && s2 > ps.pns[l1].Size) {
 			bb := ps.bboxes2[l2]
 			ps.pns[l1] = Pstate{
@@ -239,9 +243,9 @@ func (ps *Persistence) getAncestors(thresh int) {
 	}
 }
 
-// Extend each region from the previous step to its descendant
-// in the current step, where possible
-// Add regions that are born in this step.
+// Extend each region from the previous step to its descendant in the
+// current step, where possible Add regions that are born in this
+// step.
 func (ps *Persistence) extend(thresh int) {
 
 	notnew := make([]bool, 0, 1000)
@@ -304,9 +308,8 @@ func (ps *Persistence) next(t int) {
 	ps.extend(t)
 }
 
-// Trajectory is a sequence of persistence states defined by
-// labeling an image thresholded at an increasing sequence of
-// threshold values.
+// Trajectory is a sequence of persistence states defined by labeling
+// an image thresholded at an increasing sequence of threshold values.
 type Trajectory []Pstate
 
 type straj []Trajectory
@@ -327,8 +330,7 @@ func (a straj) Less(i, j int) bool {
 	return a[i][0].Label < a[j][0].Label
 }
 
-// Sort gives a deterministic order to the persistence
-// trajectories.
+// Sort gives a deterministic order to the persistence trajectories.
 func (ps *Persistence) Sort() {
 	sort.Sort(sort.Reverse(straj(ps.traj)))
 }

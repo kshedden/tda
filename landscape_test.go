@@ -30,18 +30,18 @@ var (
 			stats: []Stat{
 				{
 					Depth:     0,
-					Area:      8.996252,
-					Perimeter: 10.412776,
+					Area:      8.999082,
+					Perimeter: 8.460178,
 				},
 				{
 					Depth:     1,
-					Area:      3.998344,
-					Perimeter: 9.575754,
+					Area:      4,
+					Perimeter: 7.620954,
 				},
 				{
 					Depth:     2,
-					Area:      0.999584,
-					Perimeter: 8.741379,
+					Area:      0.999082,
+					Perimeter: 6.803323,
 				},
 			},
 		},
@@ -58,13 +58,13 @@ var (
 			stats: []Stat{
 				{
 					Depth:     0,
-					Area:      6.497293,
-					Perimeter: 10.394622,
+					Area:      6.499745,
+					Perimeter: 10.449612,
 				},
 				{
 					Depth:     1,
 					Area:      3.248646,
-					Perimeter: 9.916544,
+					Perimeter: 9.985452,
 				},
 				{
 					Depth:     2,
@@ -92,7 +92,7 @@ func TestLandscape(t *testing.T) {
 			}
 		}
 
-		stats := ls.Stats(tst.depth, 1, 9, 50)
+		stats := ls.Stats(tst.depth, 100)
 		for j := range stats {
 			if math.Abs(stats[j].Area-tst.stats[j].Area) > 1e-5 {
 				fmt.Printf("Landscale area disagrees for test %d, point %d\n", jt, j)

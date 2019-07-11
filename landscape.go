@@ -23,6 +23,9 @@ type Landscape struct {
 
 	// The observed intervals that are in each elementary interval
 	index [][]int
+
+	// The minimum and maximum of the distinct birth and death times
+	min, max float64
 }
 
 // NewLandscape returns a Landscape value for the given object birth
@@ -64,6 +67,19 @@ func (ls *Landscape) init() {
 	di = di[0:j]
 	ls.distinct = di
 
+	mn := di[0]
+	mx := di[0]
+	for i := range di {
+		if di[i] < mn {
+			mn = di[i]
+		}
+		if di[i] > mx {
+			mx = di[i]
+		}
+	}
+	ls.min = mn
+	ls.max = mx
+
 	// Determine which observed intervals cover each elementary
 	// interval.
 	ls.index = make([][]int, len(di))
@@ -92,9 +108,10 @@ func maxi(x []int) int {
 	return m
 }
 
-// Eval evaluates the landscape function at a given point t, at
-// a given series of depths.  Depth=0 corresponds to the maximum landscape pofile,
-// depth=1 corresponds to the second highest landscape profile etc.
+// Eval evaluates the landscape function at a given point t, at a
+// given series of depths.  Depth=0 corresponds to the maximum
+// landscape pofile, depth=1 corresponds to the second highest
+// landscape profile etc.
 func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 
 	ii := sort.SearchFloat64s(ls.distinct, t)
@@ -146,18 +163,18 @@ type Stat struct {
 	Centroid  [2]float64
 }
 
-// Stats obtains the area, perimeter, and centroid for a series of landscape
-// profiles.  The landscape function is evaluated on a grid of npoints
-// points from low to high, at the given depths.
-func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
+// Stats obtains the area, perimeter, and centroid for a series of
+// landscape profiles.  The landscape function is evaluated on a grid
+// of npoints points over the range of the landscape function.
+func (ls *Landscape) Stats(depth []int, npoints int) []Stat {
 
-	d := (high - low) / float64(npoints-1)
+	d := (ls.max - ls.min) / float64(npoints-1)
 
 	r := make([]Stat, len(depth))
 
-	lastx := ls.Eval(low, depth)
+	lastx := ls.Eval(ls.min, depth)
 	for i := 1; i < npoints; i++ {
-		t := low + float64(i)*d
+		t := ls.min + float64(i)*d
 		x := ls.Eval(t, depth)
 
 		for j := range depth {
@@ -172,7 +189,7 @@ func (ls *Landscape) Stats(depth []int, low, high float64, npoints int) []Stat {
 			r[j].Centroid[0] += t
 			r[j].Centroid[1] += x[j]
 			if i == 1 {
-				r[j].Centroid[0] += low
+				r[j].Centroid[0] += ls.min
 				r[j].Centroid[1] += lastx[j]
 			}
 		}
