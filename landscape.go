@@ -26,7 +26,8 @@ type Landscape struct {
 }
 
 // NewLandscape returns a Landscape value for the given object birth
-// and death times.
+// and death times.  Call the Eval method to evaluate the landscape
+// function at prescribed depths.
 func NewLandscape(birth, death []float64) *Landscape {
 
 	if len(birth) != len(death) {
@@ -91,8 +92,8 @@ func maxi(x []int) int {
 	return m
 }
 
-// Eval evaluates the landscape at a series of depths, at a given
-// point t.  Depth=0 corresponds to the maximum landscape pofile,
+// Eval evaluates the landscape function at a given point t, at
+// a given series of depths.  Depth=0 corresponds to the maximum landscape pofile,
 // depth=1 corresponds to the second highest landscape profile etc.
 func (ls *Landscape) Eval(t float64, depth []int) []float64 {
 

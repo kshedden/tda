@@ -216,6 +216,10 @@ func (cp *ConvexPeel) Stats(depth []float64) []Stat {
 // remains.
 func (cp *ConvexPeel) PeelTo(frac float64) {
 
+	if frac <= 0 || frac >= 1 {
+		panic("frac must be in (0, 1)\n")
+	}
+
 	for {
 		n := 0
 		for i := range cp.skip {

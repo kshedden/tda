@@ -21,6 +21,9 @@ type Persistence struct {
 	// The original image being processed
 	img []int
 
+	// The minimum and maximum of the image pixel intensities
+	min, max int
+
 	// The current thresholded image
 	timg []uint8
 
@@ -125,18 +128,20 @@ func maxes(lab, max2, img []int, ncomp, rows int) []int {
 	return max2
 }
 
-// NewPersistence calculates an object persistence diagram for the given image.
-// To produce the persistence information, call the Next method for an increasing
-// sequence of threshold values.  The first threshold value 'low' is provided here.
-func NewPersistence(img []int, rows, low int) *Persistence {
+// NewPersistence calculates an object persistence diagram for the given image,
+// which must be rectangular with the given number of rows.  The steps argument
+// determines the threshold increments used to produce the persistence diagram.
+func NewPersistence(img []int, rows, steps int) *Persistence {
 
 	cols := len(img) / rows
 	if rows*cols != len(img) {
 		panic("rows is not compatible with img")
 	}
 
+	mn, mx := iminmax(img)
+
 	timg := make([]uint8, rows*cols)
-	timg = threshold(img, timg, low)
+	timg = threshold(img, timg, mn)
 
 	lbuf1 := make([]int, rows*cols)
 	lbuf2 := make([]int, rows*cols)
@@ -148,6 +153,7 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 	max2 := maxes(lbuf2, nil, img, len(size2), rows)
 	bboxes2 := lbl.Bboxes(nil)
 
+	// Start the persistence trajectories
 	var traj []Trajectory
 	for k, m := range max2 {
 		if k != 0 {
@@ -159,7 +165,7 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 					Max:       m,
 					Size:      s,
 					Step:      0,
-					Threshold: low,
+					Threshold: mn,
 					Bbox:      bb,
 				},
 			}
@@ -167,7 +173,7 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 		}
 	}
 
-	return &Persistence{
+	per := &Persistence{
 		rows:    rows,
 		cols:    cols,
 		img:     img,
@@ -178,7 +184,18 @@ func NewPersistence(img []int, rows, low int) *Persistence {
 		size2:   size2,
 		max2:    max2,
 		bboxes2: bboxes2,
+		min:     mn,
+		max:     mx,
 	}
+
+	// Extend the persistence trajectories
+	d := float64(mx-mn) / float64(steps-1)
+	for i := 1; i < steps; i++ {
+		t := mn + int(float64(i)*d)
+		per.next(t)
+	}
+
+	return per
 }
 
 // Labels returns the current object labels.  Note that the
@@ -268,9 +285,9 @@ func (ps *Persistence) extend(thresh int) {
 	}
 }
 
-// Next adds another labeled image to the persistence graph.  The
+// next adds another labeled image to the persistence graph.  The
 // threshold values t should be strictly increasing.
-func (ps *Persistence) Next(t int) {
+func (ps *Persistence) next(t int) {
 
 	ps.lbuf1, ps.lbuf2 = ps.lbuf2, ps.lbuf1
 
